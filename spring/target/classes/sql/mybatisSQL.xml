@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 1. mybatis 사이트 > 시작하기 > 중간에 <!DOCTYPE mapper> 복/붙 -->
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 2. <mapper> 에 namespace 추가하기. -->  
+<!-- 3. webapp > mybatis > mybatis-config.xml > 해당 <mapper> 추가하기. -->
+<!-- 4. src > test.spring.mybatis > TestMybatis2.java 클래스 파일 만들기. -->
+<mapper namespace="mybatis">
+
+	<!-- 5 mybatisSQL.xml > sql문 <select> 태그 만들어주기. -->
+	<!-- 6 src > test.spring.mybatis > TestMybatis2.java > <select>태그의 값 넣어주고 호출하기. -->
+	<select id="selectIf" parameterType="string" resultType="int">
+		select count(*) from test where id = #{value}
+	</select>
+	
+	<!-- 7-1 넘겨준 id와 동일한 값의 레코드가 있으면 개수 리턴, 넘어온 id가 없으면 전체 레코드 수 return -->
+	<!-- 7-2 src > test.spring.mybatis > TestMybatis2.java > 에 view로 뿌려줄 sqlSessio 지정해주기. -->
+	<select id="selectIf2" parameterType="string" resultType="int">
+		select count(*) from test
+		<if test="value != null">
+			where id = #{value}
+		</if>
+	</select>
+
+	<!-- id, pw 둘다 파라미터가 넘어오면 login check, id만 넘어오면 id 존재유무 check -->
+	<select id="selectIf3" parameterType="testDTO" resultType="int">
+		select count(*) from test
+		<if test="id != null">
+			where id = #{id}
+		</if>
+		<if test="pw != null">
+			and pw = #{pw}
+		</if>
+	</select>
+
+	<!-- 문제점 해결 1. id만 넘기거나 id,pw 둘다 넘기거나 -->
+	<select id="selectIf4" parameterType="testDTO" resultType="int">
+		select count(*) from test where id = #{id}
+		<if test="pw != null">
+			and pw = #{pw}
+		</if>
+	</select>
+	
+	
+	<!-- choose : if-else -->
+	<select id="choose" parameterType="testDTO" resultType="int">
+		select count(*) from test where id = #{id}
+		<choose>
+			<when test="pw != null">
+				and pw = #{pw}
+			</when>
+			<when test="age != null">
+				and age = #{age}
+			</when>
+		</choose>
+	</select>
+
+	<!-- 문제점 해결 2. trim 이용하여 prefix, overrides 지정하고 원하는 쿼리문 조합가능. -->
+	<!-- trim -->
+	<!-- 
+		prefixOverrides : trim으로 묶여져 있는 조건 쿼리문의 첫번째로 오는 쿼리문에 and나 or가 있으면 삭제 
+		suffixOverrides : 조건에 부합되 오는 마지막 쿼리문에 지정한 suffixOverrides="지정" 한 것이 있으면 삭제.
+	-->
+	<select id="selectTrim" parameterType="testDTO" resultType="int">
+		select count(*) from test
+		<!-- prefix="where" 로 덮어쓰기 -->
+		<trim prefix="where" prefixOverrides="and|or">
+			<if test="id != null">
+				id = #{id}
+			</if>
+			<if test="pw != null">
+				and pw = #{pw}
+			</if>
+			<if test="age != null">
+				and age = #{age}
+			</if>
+		</trim>
+	</select>
+
+	<!-- update -->
+	<!-- suffixOverrides : 마지막에 suffixOverrides조건에 맞는것이 있으면 지워주는 것 -->
+	<update id="updateTest" parameterType="testDTO">
+		update test 
+		<trim prefix="set" suffixOverrides=",">
+			<if test="pw != null">
+				pw = #{pw},
+			</if>
+			<if test="age != null">
+				age = #{age},
+			</if>
+			<if test="reg != null">
+				reg = #{reg}
+			</if>
+		</trim>
+		where id = #{id}
+	</update>
+
+	<!-- forEach -->
+	<select id="selectIn" parameterType="list" resultType="int">
+		select count(*) from test where id in
+		<foreach collection="list" item="item" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</select>
+	
+	<!-- like '%키워드%' -->
+	<select id="selectLike" parameterType="hashmap" resultType="int">
+		select count(*) from test where ${column} like '%'||#{keyword}||'%'
+	</select>
+	
+	<!-- 
+		selectKey
+			test테이블에 레코드 하나 추가, 나머지값은 파라미터로 전달받고, age = 전체 레코드의 갯수를 구해 넣기  
+			- keyProperty : 적용할 곳 
+			- order : 전에 실행할 것인지, 후에 실행할 것인지. BEFORE/AFTER	
+	-->
+	<insert id="insertKeyAge" parameterType="testDTO">
+		<selectKey keyProperty="age" order="BEFORE" resultType="int">
+			select count(*) from test
+		</selectKey>
+		insert into test values(#{id}, #{pw}, #{age}, sysdate)
+	</insert>
+	
+	<insert id="insertSeq" parameterType="testDTO">
+		insert into test values(#{id}, #{pw}, test_seq.nextVal, sysdate)
+		<selectKey keyProperty="age" resultType="int" order="AFTER">
+			select test_seq.currval from dual
+		</selectKey>
+	</insert>
+
+
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<!-- namespace : 내부에 작성된 sql 태그를 호출시 namespace명.id명으로 사용하게 될것임. -->
+<mapper namespace="test">
+	
+	<!-- test 테이블의 count(*) 총 갯수 가져오기  -->
+	<select id="userCount" resultType="int">
+		select count(*) from test
+	</select>
+	
+	<!-- test 테이블의 age컬럼 중 가장 큰 값 가져오기 -->
+	<select id="maxAge" resultType="int">
+		select max(age) from test
+	</select>
+	
+	<!-- test 테이블의 모든 정보 가져오기 LIST 형식으로 -->
+	<select id="selectAll" resultType="testDTO">
+		select * from test
+	</select>
+
+	<!-- test 테이블의 id=? 인 조건에 충족하는 정보 모두 가져오기 -->
+	<select id="getOneUser" resultType="TestDTO" parameterType="string">
+		select * from test where id = #{value}
+	</select>
+	
+	<!-- test 테이블의 id=? 인 조건에 충족하는 reg컬럼의 정보 가져오기. -->
+	<select id="getReg" resultType="java.sql.Timestamp" parameterType="string">
+		select reg from test where id = #{value}
+	</select>
+
+	<!-- test 테이블의 DB를 새로 insert into(저장) 하기. -->
+	<insert id="insertUser"  parameterType="testDTO">
+		insert into test(id, pw, age, reg) values(#{id}, #{pw}, #{age}, sysdate)
+		<!-- insert into test values(#{id}, #{pw}, #{age}, sysdate) -->
+	</insert>
+
+	<!-- test 테이블의 id=? 인 조건에 충족하는 pw와 age 수정하기. -->
+	<update id="updateUser" parameterType="testDTO">
+		update test set pw=#{pw}, age=#{age} where id=#{id}
+	</update>
+
+	<!-- test 테이블의 id=? 인 조건에 충족하는 정보 삭제하기. -->
+	<delete id="deleteUser" parameterType="string">
+		delete from test where id = #{value}
+	</delete>
+
+
+
+
+
+
+</mapper>
